@@ -95,3 +95,4 @@ Supabase Free projects can pause after a week of inactivity and do not include a
 ## Security and limits
 
 Helmet headers, strict field validation, request size limits, configured CORS, UUID route validation, and contact rate limiting provide a basic baseline. CORS is not authentication. The rate limiter uses in-memory state, which is suitable for one Render instance; multiple backend instances need a shared rate-limit store. Use HTTPS in production. Contact messages can contain personal information; provide a retention/deletion process before collecting them at scale.
+Thank you
