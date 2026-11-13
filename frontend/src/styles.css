@@ -170,6 +170,13 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
 .reader-edit, .reader-delete, .card-management button { padding: 8px 0; color: var(--accent); font-size: 13px; font-weight: 600; }
 .reader-delete, .card-management button:last-child { color: #c6ccd1; }
 .reader-edit:hover, .reader-delete:hover, .card-management button:hover { color: #fff; }
+.reader-lock { margin-top: 28px; padding: 28px; border: 1px solid #2b3b47; border-radius: 9px; background: rgba(155, 216, 255, .05); color: var(--muted); text-align: center; }
+.reader-lock > span { color: var(--accent); font-size: 25px; }
+.reader-lock h3 { margin: 9px 0; color: var(--text); font-size: 21px; }
+.reader-lock p { margin: 0 0 14px; }
+.reader-lock button { border: 0; background: transparent; color: var(--accent); font-size: 13px; font-weight: 600; }
+.reader-lock .arrow { margin-left: 5px; font-size: 18px; }
+.site-shell button:disabled { cursor: wait; opacity: .58; transform: none; }
 .delete-backdrop { z-index: 30; }
 .delete-modal { width: min(100%, 450px); padding: 30px; border: 1px solid #303941; border-radius: 13px; background: #0b0e11; box-shadow: 0 30px 90px rgba(0,0,0,.55); }
 .delete-modal h2 { margin: 0 0 10px; color: var(--text); font-size: 28px; letter-spacing: -.04em; }
@@ -186,8 +193,16 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
 .back-to-journal:hover > span { transform: translateX(-4px); }
 .writer-header-actions { display: flex; align-items: center; gap: 19px; }
 .draft-status { color: #8f9aa2; font-size: 10px; letter-spacing: .13em; }
+.inbox-toggle, .signout-button { padding: 9px 11px; border: 1px solid #2b343c; border-radius: 6px; background: transparent; color: #cbd4da; font-size: 12px; }
+.inbox-toggle:hover, .signout-button:hover { border-color: var(--accent); color: var(--accent); }
 .writer-main { width: min(100%, 800px); margin: clamp(68px, 8vw, 130px) auto 110px; }
 .writer-kicker { margin: 0 0 28px; color: var(--accent); font-size: 10px; letter-spacing: .15em; }
+.owner-login { max-width: 570px; }
+.owner-login h1, .inbox-heading h1 { margin: 0 0 14px; color: var(--text); font-family: Georgia, "Times New Roman", serif; font-size: clamp(42px, 6vw, 64px); font-weight: 400; letter-spacing: -.045em; line-height: 1.1; }
+.owner-login > p:not(.writer-kicker), .owner-message { color: var(--muted); font-size: 15px; line-height: 1.7; }
+.owner-login-form { display: grid; gap: 20px; margin-top: 32px; }
+.owner-login-form .publish-button { justify-self: start; }
+.form-error { color: #f1a5a5; font-size: 13px; line-height: 1.6; }
 .writer-form { display: block; }
 .writer-title, .writer-description { display: block; width: 100%; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--text); }
 .writer-title { padding: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(50px, 6vw, 76px); font-weight: 400; letter-spacing: -.045em; line-height: 1.1; }
@@ -195,30 +210,29 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
 .writer-description { margin-top: 14px; padding: 0 0 24px; border-bottom: 1px solid var(--rule); color: #c3cdd4; font-family: Georgia, "Times New Roman", serif; font-size: 21px; line-height: 1.5; }
 .writer-description::placeholder { color: #78838c; opacity: 1; }
 .writer-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 0 21px; }
-.category-control { display: inline-flex; align-items: center; gap: 11px; color: #89959e; font-size: 11px; }
-.category-control select { padding: 6px 8px; border: 1px solid #2b343c; border-radius: 5px; background: #0a0d10; color: #cdd8df; font-size: 11px; }
+.premium-control { display: inline-flex; align-items: center; gap: 9px; color: #c0ccd3; font-size: 12px; }
+.premium-control input { width: 16px; height: 16px; accent-color: var(--accent); }
 .writer-saved-note { color: #7d8991; font-size: 11px; }
-.writer-toolbar { position: sticky; z-index: 4; top: 0; display: flex; align-items: center; gap: 5px; min-height: 52px; padding: 8px 10px; border: 1px solid #273139; border-radius: 8px; background: rgba(10, 13, 16, .96); box-shadow: 0 8px 20px rgba(0,0,0,.16); backdrop-filter: blur(12px); }
-.font-control { padding: 0 4px; color: #9aa6ae; font-size: 11px; }
-.font-select { width: 128px; margin-right: 6px; padding: 7px 8px; border: 1px solid transparent; border-radius: 5px; background: #10151a; color: #dce5eb; font-size: 12px; }
-.font-select:hover, .font-select:focus { border-color: #3b4e5e; }
-.toolbar-divider { width: 1px; height: 22px; margin: 0 6px; background: #303a43; }
-.format-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #dce5eb; font-size: 15px; }
-.format-button:hover { border-color: #334653; background: var(--accent-soft); color: var(--accent); }
-.format-bold { font-weight: 800; }
-.format-italic { font-family: Georgia, serif; font-style: italic; }
-.format-underline { text-decoration: underline; text-underline-offset: 3px; }
-.heading-format { font-size: 13px; font-weight: 700; }
-.quote-format { font-family: Georgia, serif; font-size: 25px; }
-.list-format { font-size: 16px; }
-.writing-canvas { min-height: 54vh; padding: 28px 0 36px; border: 0; outline: 0; color: #e1e8ed; font-size: 19px; line-height: 1.85; overflow-wrap: anywhere; }
-.writing-canvas:empty::before { content: attr(data-placeholder); color: #626e77; pointer-events: none; }
-.writing-canvas p { margin: 0 0 18px; }
-.writing-canvas h2, .writing-canvas h3 { margin: 30px 0 14px; color: var(--text); line-height: 1.25; }
-.writing-canvas blockquote { margin: 24px 0; padding: 5px 0 5px 20px; border-left: 2px solid var(--accent); color: #b9dff5; }
-.writing-canvas ul, .writing-canvas ol { padding-left: 26px; }
+.writing-canvas { display: block; width: 100%; min-height: 54vh; padding: 28px 0 36px; border: 0; outline: 0; resize: vertical; background: transparent; color: #e1e8ed; font-size: 19px; line-height: 1.85; overflow-wrap: anywhere; }
+.writing-canvas::placeholder { color: #626e77; opacity: 1; }
 .editor-error { color: var(--accent); font-size: 13px; }
 .writer-bottomline { display: flex; justify-content: space-between; gap: 16px; padding-top: 16px; border-top: 1px solid var(--rule); color: #75818a; font-size: 9px; letter-spacing: .1em; }
+.inbox-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.inbox-heading .writer-kicker { margin-bottom: 13px; }
+.inbox-heading h1 { margin-bottom: 0; font-size: clamp(36px, 5vw, 54px); }
+.message-list { display: grid; gap: 14px; }
+.message-card { padding: 22px; border: 1px solid #29323a; border-radius: 9px; background: #0a0d10; }
+.message-card-topline, .message-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.message-card-topline { color: #87939b; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.message-status { color: var(--accent); }
+.status-closed { color: #89939b; }
+.message-card h2 { margin: 18px 0 5px; color: var(--text); font-size: 22px; font-weight: 500; }
+.message-sender { margin: 0; color: #aab5bd; font-size: 12px; }
+.message-sender a { color: var(--accent); }
+.message-body { margin: 18px 0; color: #d1d9df; font-size: 14px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.message-card-actions { padding-top: 12px; border-top: 1px solid var(--rule); }
+.message-card-actions label { display: flex; align-items: center; gap: 8px; color: #9aa6ae; font-size: 11px; }
+.message-card-actions select { padding: 7px 8px; border: 1px solid #2b343c; border-radius: 5px; background: #0a0d10; color: #cdd8df; font-size: 11px; }
 
 .contact-shell { width: 100%; max-width: none; min-height: 100vh; margin: 0; padding: 24px clamp(24px, 3vw, 52px) 40px; }
 .contact-main { width: min(100%, 1120px); margin: clamp(68px, 8vw, 126px) auto 50px; }
@@ -238,6 +252,8 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
 .contact-submit-row > span { color: #7f8c95; font-size: 11px; }
 .contact-submit { min-height: 43px; }
 .contact-status { margin: -6px 0 0; color: var(--accent); font-size: 13px; line-height: 1.6; }
+.contact-status.error { color: #f1a5a5; }
+.contact-status.notice { color: var(--accent); }
 .contact-aside { margin-top: 4px; padding: 22px 0 0 25px; border-top: 1px solid #29343d; border-left: 1px solid rgba(155, 216, 255, .55); }
 .contact-aside .section-kicker { margin-bottom: 23px; }
 .contact-aside h2 { max-width: 15ch; margin: 0 0 15px; color: #eaf0f4; font-size: clamp(25px, 2.6vw, 33px); font-weight: 500; letter-spacing: -.035em; line-height: 1.25; }
@@ -312,7 +328,7 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
   .modal-heading { margin-bottom: 20px; }
   .reader-modal h2 { font-size: clamp(34px, 9vw, 46px); }
   .writer-header { gap: 10px; padding-bottom: 14px; }
-  .writer-header-actions { gap: 0; }
+  .writer-header-actions { justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
   .draft-status { display: none; }
   .writer-header .publish-button { padding: 9px 11px; font-size: 12px; }
   .writer-main { width: 100%; margin: 66px auto 70px; }
@@ -321,10 +337,6 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
   .writer-description { margin-top: 10px; padding-bottom: 19px; font-size: 18px; }
   .writer-meta-row { align-items: flex-start; flex-direction: column; gap: 10px; padding: 14px 0 17px; }
   .writer-saved-note { font-size: 10px; }
-  .writer-toolbar { overflow-x: auto; justify-content: flex-start; top: 0; padding: 7px 6px; }
-  .font-control, .font-select, .format-button { flex: 0 0 auto; }
-  .font-select { width: 112px; font-size: 11px; }
-  .format-button { width: 31px; height: 32px; }
   .writing-canvas { min-height: 52vh; padding-top: 23px; font-size: 17px; }
   .writer-bottomline { flex-direction: column; gap: 8px; font-size: 8px; }
   .contact-shell { padding: 18px 22px 25px; }
@@ -338,6 +350,9 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
   .contact-aside { margin-top: 0; padding-left: 17px; }
   .contact-aside h2 { max-width: 18ch; font-size: 27px; }
   .contact-bottomline { margin-top: 42px; }
+  .message-card { padding: 18px 15px; }
+  .message-card-actions { align-items: flex-start; flex-direction: column; }
+  .owner-login h1 { font-size: 45px; }
   .delete-modal { width: 100%; padding: 25px 22px max(25px, env(safe-area-inset-bottom)); border-radius: 15px 15px 0 0; }
 }
 

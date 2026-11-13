@@ -1,17 +1,25 @@
 # Dependencies
 node_modules/
 
-# Build output and Vite cache
+# Build output and caches
 dist/
 dist-ssr/
 .vite/
+.vercel/
+coverage/
 
-# Local environment values (keep the documented template)
+# Local environment values; keep example templates versioned
 .env
 .env.*
 !.env.example
+!.env.*.example
+
+# Logs and local data
+*.log
+npm-debug.log*
+data/
 
 # Local editor and operating-system files
-*.log
 .DS_Store
 Thumbs.db
+*.swp

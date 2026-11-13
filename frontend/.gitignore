@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output and Vite cache
+dist/
+dist-ssr/
+.vite/
+
+# Local environment values (keep the documented template)
+.env
+.env.*
+!.env.example
+
+# Local editor and operating-system files
+*.log
+.DS_Store
+Thumbs.db
