@@ -661,8 +661,8 @@ function App() {
           </a>
           <div className="feature-copy">
             <p className="article-meta">A NOTE ON LIFE <span /> THE BEGINNING</p>
-            <h2 id="feature-title">What if there was a way out of all your problems?</h2>
-            <p>The world offers motivation, discipline, self-help, advice, tips, and tricks at every turn. Yet the deeper struggle can remain. We put out one fire after another, day after day, and begin to think that constant strain is simply normal.</p>
+            <h2 id="feature-title">What if there was a way out of all your psychological problems?</h2>
+            <p>The world offers motivation, discipline, self-help, advice, tips, and tricks at every turn. Yet the problems still remain. We put out one fire after another, day after day, and begin to think that constant strain is simply normal.</p>
             <p>What if there were a genuine way through this cycle? Not another quick fix, but a clearer look at what is happening in our lives.</p>
             <a className="read-link" href="#about">Read the opening note <Arrow /></a>
           </div>
@@ -673,8 +673,9 @@ function App() {
           <div className="about-content">
             <h2 id="about-title">Take nothing here<br />on belief alone.</h2>
             <div className="about-copy">
-              <p>Let your own life experience be the measure. Nothing here asks you to follow a method or perform a prescribed self-examination. What is written matters only if it meets what you can see in your own life.</p>
-              <p>This journal may not be for everyone. It is for the serious individual willing to look closely. If these words don't resonate with you, feel free to close the tab and move on. There is no pressure to stay.</p>
+              <p>Let your own life experience be the measure. Nothing here asks you to follow a method or perform any task. What is written matters only if it meets what you can see in your own life.</p>
+              <p>This is not for everyone. It is for the serious individual willing to look closely. If these words don't resonate with you, feel free to close the tab and move on. There is no pressure to stay.</p>
+              <p>There is no right or wrong, there is no good or bad, there is no should or shouldn't. There are no rules. Everything should be a side-effect of your visceral understanding.</p>
             </div>
           </div>
         </section>
