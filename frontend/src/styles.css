@@ -46,7 +46,9 @@ body { width: 100%; min-width: 320px; min-height: 100vh; margin: 0; background: 
 .main-nav { display: flex; align-items: center; gap: clamp(22px, 3vw, 42px); }
 .main-nav a, .header-note { color: #e1e7ec; font-size: 14px; transition: color .18s ease; }
 .main-nav a:hover, .header-note:hover, .site-footer a:hover { color: var(--accent); }
-.brand-mark { justify-self: center; color: var(--accent); font-size: 48px; font-weight: 500; line-height: .8; }
+.brand-mark { display: grid; width: 48px; height: 48px; place-items: center; justify-self: center; color: var(--accent); }
+.brand-asterisk { display: block; width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.brand-asterisk circle { fill: currentColor; stroke: none; }
 .header-actions { justify-self: end; display: flex; align-items: center; gap: 25px; }
 .header-note .arrow { margin-left: 8px; }
 .arrow { display: inline-block; color: var(--accent); font-size: 22px; line-height: 1; transition: transform .2s ease; }
@@ -142,8 +144,9 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
 
 .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: auto; padding-top: 25px; border-top: 1px solid var(--rule); color: #9aa4ac; font-size: 10px; letter-spacing: .1em; }
 .site-footer a { transition: color .18s ease; }
-.footer-brand { color: #e8edf1; font-weight: 600; }
-.footer-brand span { margin-right: 8px; color: var(--accent); font-size: 19px; vertical-align: -2px; }
+.footer-brand { display: inline-flex; align-items: center; color: #e8edf1; font-weight: 600; }
+.footer-brand span { display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; align-items: center; justify-content: center; margin-right: 8px; color: var(--accent); }
+.footer-brand .brand-asterisk { width: 18px; height: 18px; stroke-width: 1.6; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 .modal-backdrop { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .78); backdrop-filter: blur(8px); animation: fade-in .18s ease-out; }
@@ -312,7 +315,8 @@ a:hover .arrow, button:hover .arrow { transform: translateX(4px); }
   .main-nav { gap: 16px; }
   .main-nav a { font-size: 12px; }
   .main-nav a:nth-child(3) { display: none; }
-  .brand-mark { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 37px; }
+  .brand-mark { position: absolute; left: 50%; top: 50%; width: 37px; height: 37px; transform: translate(-50%, -50%); }
+  .brand-mark .brand-asterisk { width: 28px; height: 28px; }
   .header-actions { gap: 0; }
   .header-note { display: none; }
   .header-actions .write-button { padding: 9px 10px; font-size: 11px; }

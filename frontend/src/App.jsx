@@ -14,6 +14,15 @@ function Arrow() {
   return <span className="arrow" aria-hidden="true">→</span>
 }
 
+function BrandAsterisk() {
+  return (
+    <svg className="brand-asterisk" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <path d="M16 3v9.4M16 19.6V29M3 16h9.4M19.6 16H29M6.8 6.8l6.65 6.65m5.1 5.1 6.65 6.65M25.2 6.8l-6.65 6.65m-5.1 5.1L6.8 25.2" />
+      <circle cx="16" cy="16" r="1.5" />
+    </svg>
+  )
+}
+
 function FeatureArtwork() {
   return (
     <svg className="feature-artwork" viewBox="0 0 1000 720" role="img" aria-labelledby="art-title art-description">
@@ -663,7 +672,7 @@ function App() {
           <a href="#home">Home</a><a href="#about">About</a><a href="#articles">Articles</a>
           <a href="/contact" onClick={(event) => { event.preventDefault(); openContact() }}>Contact</a>
         </nav>
-        <a className="brand-mark" href="#home" aria-label="The Truth home">✳</a>
+        <a className="brand-mark" href="#home" aria-label="The Truth home"><BrandAsterisk /></a>
         <div className="header-actions">
           <a className="header-note" href="#about">Read this first <Arrow /></a>
           <button className="write-button" type="button" onClick={() => openWriter()}>{isAdmin ? 'Write an article' : 'Owner sign in'} <span aria-hidden="true">+</span></button>
@@ -731,7 +740,7 @@ function App() {
       </main>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#home"><span>✳</span> THE TRUTH</a><span>A LIFE DEVOTED TO TRUTH.</span>
+        <a className="footer-brand" href="#home"><span><BrandAsterisk /></span> THE TRUTH</a><span>A LIFE DEVOTED TO TRUTH.</span>
         <a href="#home">BACK TO TOP ↑</a><a href="/contact" onClick={(event) => { event.preventDefault(); openContact() }}>CONTACT</a>
       </footer>
 
