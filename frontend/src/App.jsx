@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
-import { apiRequest, loadArticles } from './api.js'
+import { apiRequest, loadArticles, uploadArticleThumbnail } from './api.js'
 import { authConfigured, supabase } from './supabase.js'
+
+const ARTICLE_COVERS = ['/images/bamboo-flute.jpg', '/images/peacock-feather.jpg', '/images/river-dawn.jpg']
+const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024
+const THUMBNAIL_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+function fallbackCover(index = 0) {
+  return ARTICLE_COVERS[index % ARTICLE_COVERS.length]
+}
 
 function Arrow() {
   return <span className="arrow" aria-hidden="true">→</span>
@@ -56,7 +64,7 @@ function App() {
   const [editingId, setEditingId] = useState(null)
   const [selectedArticle, setSelectedArticle] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const [draft, setDraft] = useState({ title: '', excerpt: '', content: '', isPremium: false })
+  const [draft, setDraft] = useState({ title: '', excerpt: '', content: '', isPremium: false, thumbnailUrl: '' })
   const [editorError, setEditorError] = useState('')
   const [editorLoading, setEditorLoading] = useState(false)
   const [editorSaving, setEditorSaving] = useState(false)
@@ -77,6 +85,8 @@ function App() {
   const [contactsLoading, setContactsLoading] = useState(false)
   const [contactsError, setContactsError] = useState('')
   const [updatingContactId, setUpdatingContactId] = useState(null)
+  const [thumbnailUploading, setThumbnailUploading] = useState(false)
+  const [thumbnailError, setThumbnailError] = useState('')
 
   const filteredArticles = articles.filter((article) => {
     const searchableText = `${article.title} ${article.excerpt}`.toLowerCase()
@@ -182,9 +192,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    document.title = view === 'writer'
-      ? `${writerPanel === 'inbox' ? 'Consultation messages' : editingId ? 'Edit article' : 'Owner access'} | The Truth`
-      : view === 'contact' ? 'Contact | The Truth' : 'The Truth — A life devoted to what matters'
+    document.title = 'Visceral'
   }, [view, editingId, writerPanel])
 
   useEffect(() => {
@@ -203,6 +211,31 @@ function App() {
     setDraft((current) => ({ ...current, [field]: value }))
   }
 
+  async function handleThumbnailUpload(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setThumbnailError('')
+    if (!THUMBNAIL_TYPES.includes(file.type)) {
+      setThumbnailError('Choose a JPEG, PNG, or WebP image.')
+      return
+    }
+    if (file.size > MAX_THUMBNAIL_SIZE) {
+      setThumbnailError('The image must be 5 MB or smaller.')
+      return
+    }
+
+    setThumbnailUploading(true)
+    try {
+      const response = await uploadArticleThumbnail(file)
+      updateDraft('thumbnailUrl', response.thumbnailUrl)
+    } catch (error) {
+      setThumbnailError(error.message)
+    } finally {
+      setThumbnailUploading(false)
+    }
+  }
+
   async function openWriter(article = null) {
     setSelectedArticle(null)
     setEditorError('')
@@ -214,7 +247,9 @@ function App() {
       excerpt: article?.excerpt || '',
       content: article?.content || '',
       isPremium: Boolean(article?.isPremium),
+      thumbnailUrl: article?.thumbnailUrl || '',
     })
+    setThumbnailError('')
     window.history.pushState({ truthView: 'writer', postId: article?.id || null }, '', '/write')
     setView('writer')
     window.scrollTo(0, 0)
@@ -231,6 +266,7 @@ function App() {
           excerpt: fullArticle.excerpt || '',
           content: fullArticle.content || '',
           isPremium: Boolean(fullArticle.isPremium),
+          thumbnailUrl: fullArticle.thumbnailUrl || '',
         })
       } catch (error) {
         setEditorError(error.message)
@@ -289,6 +325,10 @@ function App() {
 
   async function publishArticle(event) {
     event.preventDefault()
+    if (thumbnailUploading) {
+      setEditorError('Wait for the cover image upload to finish before publishing.')
+      return
+    }
     if (!draft.title.trim() || !draft.content.trim()) {
       setEditorError('Add a title and some writing before publishing.')
       return
@@ -298,6 +338,7 @@ function App() {
       title: draft.title.trim(),
       content: draft.content.trim(),
       isPremium: draft.isPremium,
+      thumbnailUrl: draft.thumbnailUrl || null,
     }
     if (draft.excerpt.trim()) body.excerpt = draft.excerpt.trim()
 
@@ -437,6 +478,16 @@ function App() {
         <form id="blog-editor-form" className="writer-form" onSubmit={publishArticle}>
           <input className="writer-title" maxLength={200} autoFocus required value={draft.title} onChange={(event) => updateDraft('title', event.target.value)} placeholder="Title" aria-label="Article title" />
           <input className="writer-description" maxLength={500} value={draft.excerpt} onChange={(event) => updateDraft('excerpt', event.target.value)} placeholder="A short preview (optional)" aria-label="Article preview" />
+          <div className="article-cover-control">
+            <div className="article-cover-preview"><img src={draft.thumbnailUrl || fallbackCover(1)} alt="Article cover preview" /></div>
+            <div className="article-cover-actions">
+              <span>Article card image</span>
+              <label className="article-cover-button">{thumbnailUploading ? 'Uploading...' : 'Choose image'}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleThumbnailUpload} disabled={thumbnailUploading} /></label>
+              {draft.thumbnailUrl && <button className="article-cover-remove" type="button" onClick={() => updateDraft('thumbnailUrl', '')}>Remove</button>}
+              <small>JPEG, PNG, or WebP · 5 MB max</small>
+              {thumbnailError && <small className="form-error" role="alert">{thumbnailError}</small>}
+            </div>
+          </div>
           <div className="writer-meta-row">
             <label className="premium-control"><input type="checkbox" checked={draft.isPremium} onChange={(event) => updateDraft('isPremium', event.target.checked)} /> Premium article</label>
             <span className="writer-saved-note">Articles publish immediately.</span>
@@ -641,6 +692,9 @@ function App() {
               <div className="empty-state"><p>{articleError}</p><button className="reader-edit" type="button" onClick={refreshArticles}>Try again</button></div>
             ) : filteredArticles.length ? filteredArticles.map((article, index) => (
               <article className="blog-card" key={article.id}>
+                <div className="article-card-thumbnail">
+                  <img src={article.thumbnailUrl || fallbackCover(index)} alt="" loading="lazy" />
+                </div>
                 <div className="card-topline">
                   <span className="card-category">{article.isPremium ? 'PREMIUM' : 'REFLECTION'}</span>
                   <span className="card-number">{article.isPremium ? 'LOCKED' : String(index + 1).padStart(2, '0')}</span>

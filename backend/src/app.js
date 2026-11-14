@@ -1,4 +1,5 @@
 import cors from 'cors';
+import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
@@ -7,6 +8,13 @@ import { sendContactNotification } from './email.js';
 const MAX_TITLE_LENGTH = 200;
 const MAX_CONTENT_LENGTH = 100_000;
 const MAX_EXCERPT_LENGTH = 500;
+const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
+const THUMBNAIL_BUCKET = 'truth-thumbnails';
+const THUMBNAIL_TYPES = {
+  'image/jpeg': { extension: 'jpg', matches: (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff },
+  'image/png': { extension: 'png', matches: (bytes) => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
+  'image/webp': { extension: 'webp', matches: (bytes) => bytes.length >= 12 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP' },
+};
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -23,6 +31,11 @@ export function createApp({
   }
 
   const app = express();
+  app.use((req, res, next) => {
+    req.requestId = randomUUID();
+    res.setHeader('X-Request-Id', req.requestId);
+    next();
+  });
   const allowedOrigins = (corsOrigin || 'http://localhost:5173')
     .split(',')
     .map((origin) => origin.trim())
@@ -45,7 +58,7 @@ export function createApp({
     const end = offset + limit - 1;
     const { data, count, error } = await supabase
       .from('truths')
-      .select('id, title, excerpt, is_premium, created_at, updated_at', { count: 'exact' })
+      .select('id, title, excerpt, thumbnail_url, is_premium, created_at, updated_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, end);
@@ -81,6 +94,7 @@ export function createApp({
         title: input.title,
         content: input.content,
         excerpt: input.excerpt,
+        thumbnail_url: input.thumbnailUrl,
         is_premium: input.isPremium,
       })
       .select('*')
@@ -88,6 +102,23 @@ export function createApp({
     if (error) throw error;
 
     res.status(201).json({ truth: toPublicTruth(data, true) });
+  });
+
+  app.post('/truths/thumbnail', adminOnly, express.raw({ type: Object.keys(THUMBNAIL_TYPES), limit: MAX_THUMBNAIL_SIZE }), async (req, res) => {
+    const contentType = (req.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    const imageType = THUMBNAIL_TYPES[contentType];
+    if (!imageType) return res.status(415).json({ error: 'Upload a JPEG, PNG, or WebP image.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'Choose an image to upload.' });
+    if (!imageType.matches(req.body)) return res.status(400).json({ error: 'The image contents do not match its file type.' });
+
+    const objectPath = `${adminUserId}/${randomUUID()}.${imageType.extension}`;
+    const { error } = await supabase.storage
+      .from(THUMBNAIL_BUCKET)
+      .upload(objectPath, req.body, { contentType, cacheControl: '31536000', upsert: false });
+    if (error) throw error;
+
+    const { data } = supabase.storage.from(THUMBNAIL_BUCKET).getPublicUrl(objectPath);
+    res.status(201).json({ thumbnailUrl: data.publicUrl });
   });
 
   app.put('/truths/:truthId', adminOnly, async (req, res) => {
@@ -110,6 +141,7 @@ export function createApp({
         title: input.title,
         content: input.content,
         excerpt: input.excerpt,
+        thumbnail_url: input.thumbnailUrl,
         is_premium: input.isPremium,
         updated_at: new Date().toISOString(),
       })
@@ -210,18 +242,87 @@ export function createApp({
 
   app.use((_req, res) => res.status(404).json({ error: 'Route not found.' }));
 
-  app.use((error, _req, res, _next) => {
+  app.use((error, req, res, next) => {
+    if (res.headersSent) return next(error);
     if (error?.type === 'entity.too.large') {
-      return res.status(413).json({ error: 'Request body is too large.' });
+      return res.status(413).json({ error: 'Request body is too large.', requestId: req.requestId });
     }
     if (error instanceof SyntaxError && 'body' in error) {
-      return res.status(400).json({ error: 'Request body must contain valid JSON.' });
+      return res.status(400).json({ error: 'Request body must contain valid JSON.', requestId: req.requestId });
     }
-    console.error('API request failed:', error);
-    res.status(500).json({ error: 'Internal server error.' });
+
+    const failure = classifyApiError(error, req);
+    const logEntry = {
+      level: failure.status >= 500 ? 'error' : 'warn',
+      event: 'api_request_failed',
+      requestId: req.requestId,
+      method: req.method,
+      path: req.path,
+      status: failure.status,
+      errorCode: failure.code,
+      upstreamCode: getUpstreamCode(error),
+      errorName: error?.name || 'Error',
+      message: sanitizeLogValue(error?.message || 'Unknown API error.'),
+    };
+    if (process.env.NODE_ENV !== 'production' && error?.details) {
+      logEntry.details = sanitizeLogValue(error.details).slice(0, 1000);
+    }
+    console.error(JSON.stringify(logEntry));
+
+    res.status(failure.status).json({
+      error: failure.message,
+      code: failure.code,
+      requestId: req.requestId,
+    });
   });
 
   return app;
+}
+
+function classifyApiError(error, req) {
+  const combined = [error?.name, error?.message, error?.details, error?.cause?.message, error?.cause?.code]
+    .filter(Boolean)
+    .join(' ');
+
+  if (/AuthRetryableFetchError|fetch failed|EACCES|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|ECONNRESET/i.test(combined)) {
+    return {
+      status: 503,
+      code: 'SUPABASE_UNAVAILABLE',
+      message: 'The backend could not reach Supabase. Check outbound HTTPS access, SUPABASE_URL, and the Supabase project status.',
+    };
+  }
+
+  if (error?.code === '42703' && /thumbnail_url/i.test(`${error.message || ''} ${error.details || ''}`)) {
+    return {
+      status: 503,
+      code: 'THUMBNAIL_MIGRATION_REQUIRED',
+      message: 'The article thumbnail database migration has not been applied. Run the thumbnail migration in Supabase.',
+    };
+  }
+
+  if (/bucket.*not found|not found.*bucket/i.test(String(error?.message || '')) && req.path === '/truths/thumbnail') {
+    return {
+      status: 503,
+      code: 'THUMBNAIL_BUCKET_MISSING',
+      message: 'The Supabase thumbnail bucket is missing. Run the thumbnail migration in Supabase.',
+    };
+  }
+
+  return { status: 500, code: 'INTERNAL_ERROR', message: 'Internal server error.' };
+}
+
+function getUpstreamCode(error) {
+  if (error?.cause?.code) return error.cause.code;
+  if (error?.code) return error.code;
+  const text = `${error?.details || ''} ${error?.cause?.message || ''}`;
+  return text.match(/\b(EACCES|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|ECONNRESET)\b/i)?.[1] || null;
+}
+
+function sanitizeLogValue(value) {
+  return String(value)
+    .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
+    .replace(/sb_secret_[A-Za-z0-9_-]+/g, '[secret key redacted]')
+    .replace(/eyJ[A-Za-z0-9_-]{20,}/g, '[token redacted]');
 }
 
 function requireAdmin(supabase, adminUserId) {
@@ -269,6 +370,28 @@ function validateTruthInput(body, existing = null) {
   if (body.excerpt !== undefined && body.excerpt !== null && typeof body.excerpt !== 'string') {
     return { error: 'excerpt must be a string or null.' };
   }
+  if (body.thumbnailUrl !== undefined && body.thumbnailUrl !== null && typeof body.thumbnailUrl !== 'string') {
+    return { error: 'thumbnailUrl must be a URL string or null.' };
+  }
+
+  let thumbnailUrl = existing?.thumbnail_url ?? null;
+  if (body.thumbnailUrl !== undefined) {
+    const submittedUrl = typeof body.thumbnailUrl === 'string' ? body.thumbnailUrl.trim() : '';
+    if (!submittedUrl) {
+      thumbnailUrl = null;
+    } else {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(submittedUrl);
+      } catch {
+        return { error: 'thumbnailUrl must be a valid HTTPS URL.' };
+      }
+      if (parsedUrl.protocol !== 'https:' || submittedUrl.length > 2048) {
+        return { error: 'thumbnailUrl must be a valid HTTPS URL of at most 2048 characters.' };
+      }
+      thumbnailUrl = submittedUrl;
+    }
+  }
 
   let excerpt;
   if (typeof body.excerpt === 'string' && body.excerpt.trim()) {
@@ -284,6 +407,7 @@ function validateTruthInput(body, existing = null) {
     title,
     content,
     excerpt,
+    thumbnailUrl,
     isPremium: body.isPremium ?? Boolean(existing?.is_premium),
   };
 }
@@ -315,6 +439,7 @@ function toPublicSummary(row) {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt,
+    thumbnailUrl: row.thumbnail_url ?? null,
     isPremium: row.is_premium,
     publishedAt: row.created_at,
     updatedAt: row.updated_at,

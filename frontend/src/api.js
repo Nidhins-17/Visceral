@@ -54,3 +54,35 @@ export async function loadArticles() {
 
   return items
 }
+
+export async function uploadArticleThumbnail(file) {
+  if (!supabase) throw new Error('Owner sign-in is not configured.')
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw new Error(error.message)
+  const accessToken = data.session?.access_token
+  if (!accessToken) throw new Error('Sign in as the owner before uploading an image.')
+
+  let response
+  try {
+    response = await fetch(`${API_BASE_URL}/truths/thumbnail`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': file.type,
+      },
+      body: file,
+    })
+  } catch {
+    throw new Error('Could not reach the API. Check that the backend is running and VITE_API_BASE_URL is correct.')
+  }
+
+  let payload = null
+  try {
+    payload = await response.json()
+  } catch {
+    // Keep a useful fallback if the server returned a non-JSON error page.
+  }
+  if (!response.ok) throw new Error(payload?.error || `The API returned an error (${response.status}).`)
+  return payload
+}

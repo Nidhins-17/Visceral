@@ -6,7 +6,7 @@ Express API for public articles, owner-only publishing, and consultation message
 
 Requirements: Node.js 20 or newer and npm.
 
-1. Create the two tables by running [`supabase/migrations/202611130001_initial_schema.sql`](./supabase/migrations/202611130001_initial_schema.sql) once in the Supabase SQL Editor.
+1. Run [`supabase/migrations/202611130001_initial_schema.sql`](./supabase/migrations/202611130001_initial_schema.sql), then [`supabase/migrations/202611130002_article_thumbnails.sql`](./supabase/migrations/202611130002_article_thumbnails.sql) in the Supabase SQL Editor. The second migration adds the article thumbnail field and public-read Storage bucket.
 2. Copy `.env.example` to `.env` and set:
    - `SUPABASE_URL`: the project URL.
    - `SUPABASE_SECRET_KEY`: a Supabase secret key (`sb_secret_...`), used only by this server.
@@ -55,6 +55,8 @@ All routes below require the owner access token:
 
 `isPremium` defaults to `false`. An excerpt is generated from the content when omitted. Articles publish immediately; draft and scheduled states are not modeled.
 
+The owner editor uploads optional cover images through `POST /truths/thumbnail` as raw JPEG, PNG, or WebP bytes with the matching `Content-Type`. Uploads are limited to 5 MB, stored in Supabase Storage, and require the owner access token. The returned `thumbnailUrl` is included with article create/update requests; set it to `null` to clear a cover.
+
 ### Consultation contact
 
 - `POST /contacts` — public JSON `{ "name": "...", "email": "...", "subject": "optional", "message": "..." }`; stores the message in Supabase and sends an email notification to the configured contact address. Limited to five submissions per IP per 15 minutes.
@@ -73,7 +75,7 @@ The schema is in the versioned SQL migration under `supabase/migrations/`.
 
 | Table | Purpose and fields |
 | --- | --- |
-| `truths` | UUID primary key; required title and plain-text content; teaser excerpt; `is_premium` boolean; creation and update timestamps. |
+| `truths` | UUID primary key; required title and plain-text content; teaser excerpt; optional `thumbnail_url`; `is_premium` boolean; creation and update timestamps. |
 | `consultation_messages` | UUID primary key; sender name/email; optional subject; message; `new` / `in_progress` / `closed` status; timestamps. |
 
 The `truths` table has a descending publication-time index for the public feed. The contact inbox has a status/date index for filtering new and open consultations. RLS is enabled, and direct `anon`/`authenticated` table access is revoked. No separate application users table is needed: Supabase Auth owns the single admin identity. There is no slug because article routes use stable UUIDs. The `is_premium` flag hides content at the API boundary; it does not implement subscriptions, payments, or paid-user entitlements.

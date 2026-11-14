@@ -12,7 +12,7 @@ npm ci
 
 Copy `.env.example` to `.env.local` and configure:
 
-- `VITE_API_BASE_URL=http://localhost:3001`
+- `VITE_API_BASE_URL=http://127.0.0.1:3001`
 - `VITE_SUPABASE_URL` from the Supabase project settings
 - `VITE_SUPABASE_PUBLISHABLE_KEY` from the Supabase API keys page
 
@@ -36,6 +36,7 @@ npm run preview
 - Public articles load from `GET /truths`; the full article is fetched when a visitor opens it. Premium articles show their teaser and lock state.
 - The contact form sends its message to `POST /contacts`. Messages are stored in Supabase and emailed to the configured owner address; the visitor's email app is not opened.
 - Open `/write` and sign in with the single Supabase Auth owner account. Public sign-ups should be disabled in Supabase. The API checks the account against `ADMIN_USER_ID`; after signing in as that owner, you can publish/edit/delete articles and open the Messages inbox.
+- In the article editor, optionally upload a JPEG, PNG, or WebP cover image up to 5 MB. Run the thumbnail migration in `../backend/supabase/migrations` before enabling uploads.
 - Set `CORS_ORIGIN` on the backend to the exact frontend origin, including the Vercel production domain.
 
 ## Deploying to Vercel
