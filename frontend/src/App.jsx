@@ -92,6 +92,30 @@ function App() {
     const searchableText = `${article.title} ${article.excerpt}`.toLowerCase()
     return searchableText.includes(query.trim().toLowerCase())
   })
+  const unlockedArticles = filteredArticles.filter((article) => !article.isPremium)
+  const lockedArticles = filteredArticles.filter((article) => article.isPremium)
+
+  function renderArticleCard(article, index) {
+    return (
+      <article className="blog-card" key={article.id}>
+        <div className="article-card-thumbnail">
+          <img src={article.thumbnailUrl || fallbackCover(index)} alt="" loading="lazy" />
+        </div>
+        <div className="card-topline">
+          <span className="card-category">{article.isPremium ? 'PREMIUM' : 'REFLECTION'}</span>
+          <span className="card-number">{article.isPremium ? 'LOCKED' : String(index + 1).padStart(2, '0')}</span>
+        </div>
+        <button className="card-open" type="button" onClick={() => openArticle(article)}>
+          <span className="card-title">{article.title}</span><span className="card-description">{article.excerpt}</span>
+        </button>
+        <div className="card-footer">
+          <span className="card-date">{formatDate(article.publishedAt)}</span>
+          <button className="card-read" type="button" onClick={() => openArticle(article)}>Read <Arrow /></button>
+        </div>
+        {isAdmin && <div className="card-management"><button type="button" onClick={() => openWriter(article)}>Edit</button><button type="button" onClick={() => requestDelete(article)}>Delete</button></div>}
+      </article>
+    )
+  }
 
   async function refreshArticles() {
     setArticlesLoading(true)
@@ -684,32 +708,24 @@ function App() {
           <div className="articles-heading">
             <div><p className="section-kicker"><span>03</span><span>THE JOURNAL</span></p><h2 id="articles-title">Articles &amp; reflections</h2></div>
             <div className="articles-tools">
-              <span className="article-count">{String(filteredArticles.length).padStart(2, '0')} ENTRIES</span>
+              <span className="article-count">{String(unlockedArticles.length).padStart(2, '0')} ENTRIES</span>
               <button className="write-button secondary-write" type="button" onClick={() => openWriter()}>{isAdmin ? 'Write an article' : 'Owner sign in'} <span>+</span></button>
             </div>
           </div>
           <div className="blog-grid" aria-live="polite">
             {articlesLoading ? <p className="empty-state">Loading articles…</p> : articleError ? (
               <div className="empty-state"><p>{articleError}</p><button className="reader-edit" type="button" onClick={refreshArticles}>Try again</button></div>
-            ) : filteredArticles.length ? filteredArticles.map((article, index) => (
-              <article className="blog-card" key={article.id}>
-                <div className="article-card-thumbnail">
-                  <img src={article.thumbnailUrl || fallbackCover(index)} alt="" loading="lazy" />
-                </div>
-                <div className="card-topline">
-                  <span className="card-category">{article.isPremium ? 'PREMIUM' : 'REFLECTION'}</span>
-                  <span className="card-number">{article.isPremium ? 'LOCKED' : String(index + 1).padStart(2, '0')}</span>
-                </div>
-                <button className="card-open" type="button" onClick={() => openArticle(article)}>
-                  <span className="card-title">{article.title}</span><span className="card-description">{article.excerpt}</span>
-                </button>
-                <div className="card-footer">
-                  <span className="card-date">{formatDate(article.publishedAt)}</span>
-                  <button className="card-read" type="button" onClick={() => openArticle(article)}>Read <Arrow /></button>
-                </div>
-                {isAdmin && <div className="card-management"><button type="button" onClick={() => openWriter(article)}>Edit</button><button type="button" onClick={() => requestDelete(article)}>Delete</button></div>}
-              </article>
-            )) : <p className="empty-state">{query ? 'No articles match that search.' : 'No articles have been published yet.'}</p>}
+            ) : unlockedArticles.length ? unlockedArticles.map(renderArticleCard) : <p className="empty-state">{query ? 'No unlocked articles match this search.' : 'No unlocked articles have been published yet.'}</p>}
+          </div>
+        </section>
+
+        <section className="articles-section locked-articles-section" id="locked-articles" aria-labelledby="locked-articles-title">
+          <div className="articles-heading">
+            <div><p className="section-kicker"><span>04</span><span>PREMIUM READING</span></p><h2 id="locked-articles-title">Locked articles</h2></div>
+            <div className="articles-tools"><span className="article-count">{String(lockedArticles.length).padStart(2, '0')} LOCKED</span></div>
+          </div>
+          <div className="blog-grid" aria-live="polite">
+            {articlesLoading ? <p className="empty-state">Loading locked articles…</p> : articleError ? <p className="empty-state">Locked articles are unavailable right now.</p> : lockedArticles.length ? lockedArticles.map(renderArticleCard) : <p className="empty-state">{query ? 'No locked articles match this search.' : 'No locked articles have been published yet.'}</p>}
           </div>
         </section>
       </main>
