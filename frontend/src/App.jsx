@@ -661,7 +661,7 @@ function App() {
           </a>
           <div className="feature-copy">
             <p className="article-meta">A NOTE ON LIFE <span /> THE BEGINNING</p>
-            <h2 id="feature-title">What if there was a way out of all your psychological problems?</h2>
+            <h2 id="feature-title">What if there is a way out of all your psychological problems?</h2>
             <p>The world offers motivation, discipline, self-help, advice, tips, and tricks at every turn. Yet the problems still remain. We put out one fire after another, day after day, and begin to think that constant strain is simply normal.</p>
             <p>What if there were a genuine way through this cycle? Not another quick fix, but a clearer look at what is happening in our lives.</p>
             <a className="read-link" href="#about">Read the opening note <Arrow /></a>
